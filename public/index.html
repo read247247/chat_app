@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat 999</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div id="bodyWrapper">
+        <div id="header"><h1>Welcome! You are user <span id="username"></span></h1></div>
+
+        <div id = "contentWrapper">
+            <div id="messagePane">
+                <ul id="messages"></ul>
+            </div>
+            <div id = "usersPane">
+                <h2>Connected Users:</h2>
+            </div>
+        </div>
+        <form action="">
+            <input id="m" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+    <script src="scripts/main.js"></script>
+
+    <script>
+        $(function () {
+            let me = {};
+            $('form').submit(function(e){
+                e.preventDefault(); // prevents page reloading
+                let data = {
+                    "text": $('#m').val(),
+                    "id": me.id,
+                    "username": me.username,
+                    "color": me.color
+                }
+                socket.emit('chat message', data);
+                $('#m').val('');
+                return false;
+            });
+
+            socket.on('chat message', function(msg){
+                let message = $('#messages')
+
+                if(msg.id === me.id){
+                    let htmlString = "<div class='message from_me'><i>" + msg.timeStamp + "</i>";
+                    htmlString += ": <b style='color:" + msg.color + "'>" + msg.username + "</b><br />"
+                    htmlString += "<b>" + msg.text + "</b></div>";
+                    message.append($('<li>').html(htmlString));
+                }
+                else {
+                    let htmlString = "<div class='message'><i>" + msg.timeStamp + "</i>";
+                    htmlString += ": <b style='color:" + msg.color + "'>" + msg.username + "</b><br />"
+                    htmlString += msg.text + "</div>";
+                    message.append($('<li>').html(htmlString));
+                }
+                //Scroll down every time a new message is received
+                $('#messagePane').scrollTop(message[0].scrollHeight);
+            });
+
+            socket.on('message_history', function(messages){
+                let message = $('#messages')
+                for (let i = 0; i < messages.length; i++){
+                    if(messages[i].id === me.id){
+                        let htmlString = "<div class='message from_me'><i>" + messages[i].timeStamp + "</i>";
+                        htmlString += ": <b style='color:" + messages[i].color + "'>" + messages[i].username + "</b><br />"
+                        htmlString += "<b>" + messages[i].text + "</b></div>";
+                        message.append($('<li>').html(htmlString));
+                    }
+                    else {
+                        let htmlString = "<div class='message'><i>" + messages[i].timeStamp + "</i>";
+                        htmlString += ": <b style='color:" + messages[i].color + "'>" + messages[i].username + "</b><br />"
+                        htmlString += messages[i].text + "</div>";
+                        message.append($('<li>').html(htmlString));
+                    }
+
+                }
+                $('#messagePane').scrollTop(message[0].scrollHeight);
+            });
+
+            socket.on('first_connection', function(msg){
+                me.id = msg.id;
+                me.username = msg.username;
+                me.color = msg.color;
+            });
+
+            socket.on('connected_users', function(msg){
+                let userList = document.createElement('ul');
+                for (let i = 0; i < msg.length; i++){
+                    if(msg[i].id === me.id){
+                        me.color = msg[i].color;
+                        me.username = msg[i].username;
+                        console.log("TEST2 " + JSON.stringify(msg[i].username));
+                        document.getElementById('username').textContent = msg[i].username;
+                        document.getElementById('username').style.color = msg[i].color;
+                    }
+                    if(msg[i].connected){
+                        let user = document.createElement('li');
+                        user.appendChild(document.createTextNode(msg[i].username));
+                        user.style.color = msg[i].color;
+                        userList.id = "connected_users";
+                        userList.appendChild(user);
+                    }
+                }
+                $('#connected_users').remove();
+                document.getElementById('usersPane').appendChild(userList);
+
+                // Set connected users and colors
+            });
+        });
+
+    </script>
+</body>
+</html>

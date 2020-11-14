@@ -1,0 +1,99 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font: 13px Helvetica, Arial;
+    background-color: black;
+    color: white;
+}
+
+#bodyWrapper {
+    max-width: 960px;
+    margin: auto;
+    border: 1px solid black;
+}
+
+form {
+    background: #000;
+    padding: 3px;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    max-width: 960px;
+    height: 5vh;
+    display: block;
+}
+
+form input {
+    border: 0;
+    padding: 10px;
+    width: 90%;
+    margin-right: 0.5%;
+}
+
+form button {
+    width: 9%;
+    background: rgb(130, 224, 255);
+    border: none;
+    padding: 10px;
+}
+
+#header {
+    background-color: darkred;
+    color: white;
+    font-family: Chalkboard, sans-serif;
+    text-align: center;
+    min-height: 8vh;
+    width: 100%;
+    padding: 1em;
+    margin-bottom: 1em;
+}
+
+#contentWrapper {
+    height: 87vh;
+    max-height: 87vh;
+    display: flex;
+}
+
+#usersPane {
+    height: 100%;
+    width: 20%;
+}
+
+#messagePane {
+    overflow: scroll;
+    justify-content: flex-end;
+    height: 100%;
+    width: 80%
+}
+
+#messages {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+
+#messages li {
+    width: 100%;
+    display: block;
+    float: left;
+}
+
+.message {
+    width: 60%;
+    padding: 0.75em 0.75em;
+    margin: 0.5em 0.5em;
+    border-radius: 2em;
+    background-color: #202020;
+    display: block;
+}
+
+.from_me {
+    background-color: #000080;
+    float: right;
+    clear: right;
+    display: block;
+}

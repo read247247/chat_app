@@ -1,0 +1,10 @@
+{
+  "name": "chat-application",
+  "version": "0.0.1",
+  "description": "SENG513 Assignment 3. Chat Application",
+  "dependencies": {
+    "express": "^4.17.1",
+    "random-username-generator": "^1.0.4",
+    "socket.io": "^3.0.1"
+  }
+}
