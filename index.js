@@ -15,90 +15,46 @@ app.get('/', (req, res) => {
 
 let users = [];
 let id = [];
-let num_users = 0;
 let message_history = [];
 
 io.on('connection', (socket) => {
-    if(id.includes(socket.id)) { //Check if user has been here before
-        //Change status to connected
-    }
-    else {
-        let username = name_generator.generate();
-        users.push({
-            "id": socket.id,
-            "username": username,
-            "color": "white",
-            "connected": true
+    socket.emit('first_connection', null);
+
+    socket.on('returning_user', (uid) => {
+        let ret_user = null;
+        users.filter(user => {
+            if (user.id === uid) {
+                ret_user = user;
+                user.connected = true;
+                user.id = socket.id;
+            }
         });
-        id.push(socket.id);
-        socket.emit('first_connection', {"username": username, "color": "white", "id": socket.id});
-        io.emit('connected_users', users);
-    }
-    num_users++;
-    socket.emit('message_history', message_history);
-    console.log("User " + socket.id + " connected, now " + num_users);
+        if (ret_user === null) {
+            setupNewUser();
+        } else {
+            setupUser(ret_user);
+        }
+    });
+
+    socket.on('new_user', () => {
+        setupNewUser();
+    });
 
     socket.on('chat message', (msg_in) => {
-        if(msg_in.text.startsWith("/name ")){
-            const new_username = msg_in.text.substring(6);
-            let error = 0;
-            users.filter(user => {
-                if(user.username === new_username){
-                    error = 1;
-                    socket.emit('error', {"message": "Username already taken"});
-                }
-            });
-            if(error === 0){
-                users.filter(user => {
-                    if(user.id === socket.id){
-                        user.username = new_username;
-                    }
-                });
-                io.emit('connected_users', users);
-                return;
-            } else {
-                return;
+        if(msg_in.text.startsWith("/")){
+            if(msg_in.text.startsWith("/name ")){
+                changeUsername(msg_in);
+            }
+            else if(msg_in.text.startsWith("/color ")){
+                changeColor(msg_in);
+            }
+            else{
+                socket.emit('custom_error', {"message": "Bad command"})
             }
         }
-        else if(msg_in.text.startsWith("/color ")){
-            let new_color = msg_in.text.substring(7).toLowerCase();
-            if(!validate_color.validateHTMLColorName(new_color) && !validate_color.validateHTMLColorHex(new_color)){
-                socket.emit('error', {"message": "Not a valid color"});
-                return;
-            } else {
-                users.filter(user => {
-                    if (user.id === socket.id) {
-                        user.color = new_color;
-                    }
-                });
-                message_history.filter(message => {
-                    if(message.username === msg_in.username){
-                        message.color = new_color;
-                    }
-                })
-                io.emit('connected_users', users);
-                return;
-            }
+        else {
+            sendMessage(msg_in);
         }
-        else if(msg_in.text.startsWith("/")){
-            socket.emit('error', {"message": "Bad command"})
-            return;
-        }
-        const date = new Date();
-        let msg_out = {};
-        msg_out.timeStamp = date.getHours() + ":" + date.getMinutes();
-        msg_out.username = msg_in.username;
-        msg_out.text = msg_in.text;
-        msg_out.color = msg_in.color;
-        msg_out.id = msg_in.id;
-        msg_out.text = msg_out.text.replace(":)", "😄");
-        msg_out.text = msg_out.text.replace(":(", "🙁");
-        msg_out.text = msg_out.text.replace(":o", "😮");
-        io.emit('chat message', msg_out);
-        if(message_history.length >= 200){
-            message_history = message_history.slice();
-        }
-        message_history.push(msg_out);
     });
 
     socket.on('disconnect', () => {
@@ -108,13 +64,83 @@ io.on('connection', (socket) => {
                 user.connected = false;
             }
         });
-
-        // Figure out which user disconnected and set them to disconnected
-        num_users--;
         io.emit('connected_users', users);
         console.log(socket.id + " disconnected");
-        console.log(num_users + " remaining users are " + id);
+        console.log(id.length + " remaining users are " + id);
     });
+
+    function setupNewUser() {
+        let username = name_generator.generate();
+        const user = {
+            "id": socket.id,
+            "username": username,
+            "color": "white",
+            "connected": true
+        };
+        users.push(user);
+        setupUser(user);
+    }
+
+    function setupUser(user){
+        id.push(socket.id);
+        socket.emit('user_info', {"username": user.username, "color": "white", "id": socket.id});
+        io.emit('connected_users', users);
+        socket.emit('message_history', message_history);
+        console.log("User " + socket.id + " connected, now " + id.length);
+    }
+
+    function changeUsername(msg_in) {
+        const new_username = msg_in.text.substring(6);
+        let error = 0;
+        users.filter(user => {
+            if(user.username === new_username){
+                error = 1;
+                socket.emit('custom_error', {"message": "Username already taken"});
+            }
+        });
+        if(error === 0){
+            users.filter(user => {
+                if(user.id === msg_in.uid){
+                    user.username = new_username;
+                }
+            });
+            io.emit('connected_users', users);
+        }
+    }
+
+    function changeColor(msg_in){
+        let new_color = msg_in.text.substring(7).toLowerCase();
+        if(!validate_color.validateHTMLColorName(new_color) && !validate_color.validateHTMLColorHex(new_color)){
+            socket.emit('custom_error', {"message": "Not a valid color"});
+        } else {
+            users.filter(user => {
+                if (user.id === msg_in.uid) {
+                    user.color = new_color;
+                }
+            });
+            message_history.filter(message => {
+                if(message.username === msg_in.username){
+                    message.color = new_color;
+                }
+            })
+            io.emit('connected_users', users);
+            socket.emit('message_history', message_history);
+        }
+    }
+
+    function sendMessage(msg_in) {
+        const date = new Date();
+        let msg_out = msg_in;
+        msg_out.timeStamp = date.getHours() + ":" + date.getMinutes();
+        msg_out.text = msg_out.text.replace(":)", "😄");
+        msg_out.text = msg_out.text.replace(":(", "🙁");
+        msg_out.text = msg_out.text.replace(":o", "😮");
+        io.emit('chat message', msg_out);
+        if(message_history.length >= 200){
+            message_history = message_history.slice();
+        }
+        message_history.push(msg_out);
+    }
 });
 
 http.listen(3000, () => {

@@ -34,7 +34,7 @@
                 e.preventDefault(); // prevents page reloading
                 let data = {
                     "text": $('#m').val(),
-                    "id": me.id,
+                    "uid": me.id,
                     "username": me.username,
                     "color": me.color
                 }
@@ -46,7 +46,7 @@
             socket.on('chat message', function(msg){
                 let message = $('#messages')
 
-                if(msg.id === me.id){
+                if(msg.uid === me.id){
                     let htmlString = "<div class='message from_me'><i>" + msg.timeStamp + "</i>";
                     htmlString += ": <b style='color:" + msg.color + "'>" + msg.username + "</b><br />"
                     htmlString += "<b>" + msg.text + "</b></div>";
@@ -83,17 +83,27 @@
             });
 
             socket.on('first_connection', function(msg){
+                const uid = localStorage.getItem('chat_app_uid');
+                if(uid === null){
+                    socket.emit('new_user', null);
+                } else {
+                    socket.emit('returning_user', uid);
+                }
+            });
+
+            socket.on('user_info', function(msg){
+                localStorage.setItem('chat_app_uid', msg.id);
                 me.id = msg.id;
                 me.username = msg.username;
                 me.color = msg.color;
             });
 
-            socket.on('error', function(msg){
+            socket.on('custom_error', function(msg){
                 let error = document.createElement('li');
                 error.className = "error";
                 error.textContent = "ERROR: " + msg.message;
                 document.getElementById('messages').appendChild(error);
-                $('#messagePane').scrollTop(message[0].scrollHeight);
+                $('#messagePane').scrollTop($('#messages')[0].scrollHeight);
             });
 
             socket.on('connected_users', function(msg){
