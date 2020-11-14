@@ -62,7 +62,7 @@ io.on('connection', (socket) => {
         }
         else if(msg_in.text.startsWith("/color ")){
             let new_color = msg_in.text.substring(7).toLowerCase();
-            if(!validate_color.validateHTMLColor(new_color)){
+            if(!validate_color.validateHTMLColorName(new_color) && !validate_color.validateHTMLColorHex(new_color)){
                 socket.emit('error', {"message": "Not a valid color"});
                 return;
             } else {
@@ -71,6 +71,11 @@ io.on('connection', (socket) => {
                         user.color = new_color;
                     }
                 });
+                message_history.filter(message => {
+                    if(message.username === msg_in.username){
+                        message.color = new_color;
+                    }
+                })
                 io.emit('connected_users', users);
                 return;
             }
@@ -86,11 +91,9 @@ io.on('connection', (socket) => {
         msg_out.text = msg_in.text;
         msg_out.color = msg_in.color;
         msg_out.id = msg_in.id;
-        console.log(msg_out.text);
         msg_out.text = msg_out.text.replace(":)", "😄");
         msg_out.text = msg_out.text.replace(":(", "🙁");
         msg_out.text = msg_out.text.replace(":o", "😮");
-        console.log(msg_out.text);
         io.emit('chat message', msg_out);
         if(message_history.length >= 200){
             message_history = message_history.slice();
