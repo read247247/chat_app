@@ -125,7 +125,7 @@ io.on('connection', (socket) => {
                 }
             });
             message_history.filter(message => {
-                if(message.username === msg_in.username){
+                if(message.uid === msg_in.uid){
                     message.color = new_color;
                 }
             })
