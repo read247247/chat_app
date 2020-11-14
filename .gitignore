@@ -475,3 +475,8 @@ node_modules/ws/lib/websocket.js
 node_modules/ws/LICENSE
 node_modules/ws/package.json
 node_modules/ws/README.md
+node_modules/validate-color/lib/index.d.ts
+node_modules/validate-color/lib/index.js
+node_modules/validate-color/LICENSE
+node_modules/validate-color/package.json
+node_modules/validate-color/README.md

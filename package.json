@@ -5,6 +5,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "random-username-generator": "^1.0.4",
-    "socket.io": "^3.0.1"
+    "socket.io": "^3.0.1",
+    "validate-color": "^2.1.0"
   }
 }

@@ -3,6 +3,7 @@ const http = require('http').createServer(app);
 const socket_io = require('socket.io');
 const io = socket_io(http);
 const name_generator = require('random-username-generator');
+const validate_color = require('validate-color');
 const express = require('express');
 const path = require('path');
 
@@ -39,21 +40,43 @@ io.on('connection', (socket) => {
 
     socket.on('chat message', (msg_in) => {
         if(msg_in.text.startsWith("/name ")){
+            const new_username = msg_in.text.substring(6);
+            let error = 0;
             users.filter(user => {
-                if(user.id === socket.id){
-                    user.username = msg_in.text.substring(6);
+                if(user.username === new_username){
+                    error = 1;
+                    socket.emit('error', {"message": "Username already taken"});
                 }
             });
-            io.emit('connected_users', users);
-            return;
+            if(error === 0){
+                users.filter(user => {
+                    if(user.id === socket.id){
+                        user.username = new_username;
+                    }
+                });
+                io.emit('connected_users', users);
+                return;
+            } else {
+                return;
+            }
         }
         else if(msg_in.text.startsWith("/color ")){
-            users.filter(user => {
-                if(user.id === socket.id){
-                    user.color = msg_in.text.substring(7);
-                }
-            });
-            io.emit('connected_users', users);
+            let new_color = msg_in.text.substring(7).toLowerCase();
+            if(!validate_color.validateHTMLColor(new_color)){
+                socket.emit('error', {"message": "Not a valid color"});
+                return;
+            } else {
+                users.filter(user => {
+                    if (user.id === socket.id) {
+                        user.color = new_color;
+                    }
+                });
+                io.emit('connected_users', users);
+                return;
+            }
+        }
+        else if(msg_in.text.startsWith("/")){
+            socket.emit('error', {"message": "Bad command"})
             return;
         }
         const date = new Date();

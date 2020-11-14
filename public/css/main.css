@@ -97,3 +97,16 @@ form button {
     clear: right;
     display: block;
 }
+
+.error {
+    width: 50%;
+    margin: 0.5em 0.5em;
+    float: none;
+    min-height: 2em;
+    background-color: lightcoral;
+    color: black;
+    text-align: center;
+    font-weight: bolder;
+    border-radius: 2em;
+    padding: 2em;
+}

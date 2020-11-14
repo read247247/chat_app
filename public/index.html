@@ -88,13 +88,20 @@
                 me.color = msg.color;
             });
 
+            socket.on('error', function(msg){
+                let error = document.createElement('li');
+                error.className = "error";
+                error.textContent = "ERROR: " + msg.message;
+                document.getElementById('messages').appendChild(error);
+                $('#messagePane').scrollTop(message[0].scrollHeight);
+            });
+
             socket.on('connected_users', function(msg){
                 let userList = document.createElement('ul');
                 for (let i = 0; i < msg.length; i++){
                     if(msg[i].id === me.id){
                         me.color = msg[i].color;
                         me.username = msg[i].username;
-                        console.log("TEST2 " + JSON.stringify(msg[i].username));
                         document.getElementById('username').textContent = msg[i].username;
                         document.getElementById('username').style.color = msg[i].color;
                     }
