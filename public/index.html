@@ -64,8 +64,9 @@
 
             socket.on('message_history', function(messages){
                 let message = $('#messages')
+                message.empty();
                 for (let i = 0; i < messages.length; i++){
-                    if(messages[i].id === me.id){
+                    if(messages[i].uid === me.id){
                         let htmlString = "<div class='message from_me'><i>" + messages[i].timeStamp + "</i>";
                         htmlString += ": <b style='color:" + messages[i].color + "'>" + messages[i].username + "</b><br />"
                         htmlString += "<b>" + messages[i].text + "</b></div>";

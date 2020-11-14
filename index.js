@@ -18,6 +18,7 @@ let id = [];
 let message_history = [];
 
 io.on('connection', (socket) => {
+    let user_id = null;
     socket.emit('first_connection', null);
 
     socket.on('returning_user', (uid) => {
@@ -26,7 +27,7 @@ io.on('connection', (socket) => {
             if (user.id === uid) {
                 ret_user = user;
                 user.connected = true;
-                user.id = socket.id;
+                user_id = uid;
             }
         });
         if (ret_user === null) {
@@ -41,6 +42,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('chat message', (msg_in) => {
+        if(msg_in.text.includes("<") || msg_in.text.includes(">")){
+            socket.emit('custom_error', {"message": "HTML special characters are not allowed at this time"});
+            return;
+        }
         if(msg_in.text.startsWith("/")){
             if(msg_in.text.startsWith("/name ")){
                 changeUsername(msg_in);
@@ -49,7 +54,7 @@ io.on('connection', (socket) => {
                 changeColor(msg_in);
             }
             else{
-                socket.emit('custom_error', {"message": "Bad command"})
+                socket.emit('custom_error', {"message": "Bad command"});
             }
         }
         else {
@@ -60,12 +65,12 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         id = id.filter(item => item !== socket.id);
         users.filter(user => {
-            if(user.id === socket.id){
+            if(user.id === user_id){
                 user.connected = false;
             }
         });
         io.emit('connected_users', users);
-        console.log(socket.id + " disconnected");
+        console.log(user_id + " disconnected");
         console.log(id.length + " remaining users are " + id);
     });
 
@@ -78,15 +83,16 @@ io.on('connection', (socket) => {
             "connected": true
         };
         users.push(user);
+        user_id = socket.id;
         setupUser(user);
     }
 
     function setupUser(user){
         id.push(socket.id);
-        socket.emit('user_info', {"username": user.username, "color": "white", "id": socket.id});
+        socket.emit('user_info', {"username": user.username, "color": "white", "id": user_id});
         io.emit('connected_users', users);
         socket.emit('message_history', message_history);
-        console.log("User " + socket.id + " connected, now " + id.length);
+        console.log("User " + user_id + " connected, now " + id.length);
     }
 
     function changeUsername(msg_in) {
